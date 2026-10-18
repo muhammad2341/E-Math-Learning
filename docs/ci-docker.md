@@ -116,7 +116,62 @@ docker build ./frontend -t e-math-frontend:local
 
 Jika CI gagal di step tertentu, jalankan perintah step itu persis di mesin lokal (Bun 1.4.3, Docker Buildx).
 
-## 8. Pemakaian image untuk deploy VPS (RENCANA — belum diimplementasikan)
+## 8. Deploy: pull image ke VPS
+
+Image GHCR bersifat **private by default** — sekali saja di VPS, login dulu.
+
+### 8a. Login sekali (butuh token GitHub)
+
+1. GitHub → Settings → Developer settings → **Personal access token → Tokens (classic)**
+2. Generate token dengan scope **`read:packages`** (jangan pakai token yang sama untuk hal lain, jangan commit token ini).
+3. Di VPS:
+
+```bash
+echo "<TOKEN>" | docker login ghcr.io -u muhammad2341 --password-stdin
+```
+
+> Alternatif tanpa login: jadikan package publik (repo → Packages → package → Package settings → Change visibility → Public), lalu `docker pull` anonim bisa.
+
+### 8b. Pull + jalankan dengan Compose
+
+Clone repo (hanya untuk file compose + `.env`), lalu:
+
+```bash
+git clone https://github.com/muhammad2341/E-Math-Learning.git && cd E-Math-Learning
+cp .env.example .env          # isi JWT_SECRET nyata + nilai VPS (lihat komentar di dalamnya)
+                              # BACKEND_IMAGE/FRONTEND_IMAGE sudah menunjuk ke GHCR
+
+# Tarik image (tidak build di VPS)
+docker compose -f docker-compose.yml -f docker-compose.prod.yml pull backend frontend
+
+# Jalankan (image sudah ada → compose TIDAK membangun ulang)
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+# Verifikasi
+curl -fsS http://127.0.0.1:3001/api/health
+docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+```
+
+### 8c. Atau pull manual (tanpa compose)
+
+```bash
+docker pull ghcr.io/muhammad2341/e-math-learning-backend:latest
+docker pull ghcr.io/muhammad2341/e-math-learning-frontend:latest
+# Untuk versi deterministik, pakai tag SHA dari commit yang mau dideploy:
+docker pull ghcr.io/muhammad2341/e-math-learning-backend:2320b966ac332076b119334373802f31bc01e424
+```
+
+### 8d. Update ke versi baru
+
+```bash
+cd E-Math-Learning && git pull            # (opsional, kalau file compose ikut berubah)
+docker compose -f docker-compose.yml -f docker-compose.prod.yml pull backend frontend
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+Tag `latest` selalu = push terakhir ke `main`; tag `<sha>` tidak berubah (immutable), aman untuk rollback: set `BACKEND_IMAGE`/`FRONTEND_IMAGE` di `.env` ke SHA lama lalu `up -d` lagi.
+
+## 9. Pemakaian image untuk deploy VPS (RENCANA — bagian lain di luar CI)
 
 Arsitektur tujuan ( dokumentasi saja, **bukan bagian dari tugas CI ini** ):
 
@@ -130,7 +185,7 @@ Arsitektur tujuan ( dokumentasi saja, **bukan bagian dari tugas CI ini** ):
 
 Belum (di luar cakupan tugas CI ini): SSH ke VPS, instal Docker/software, konfigurasi Nginx host, DNS, rotasi secrets, deploy otomatis.
 
-## 9. Validasi yang sudah dijalankan
+## 10. Validasi yang sudah dijalankan
 
 Lihat **Final Report** pada sesi implementasi. Ringkasan perintah:
 

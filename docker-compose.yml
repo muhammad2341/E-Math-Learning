@@ -21,7 +21,9 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    image: e-math-backend:local
+    # Override via env untuk deploy dari registry, mis.:
+    #   BACKEND_IMAGE=ghcr.io/muhammad2341/e-math-learning-backend:latest
+    image: ${BACKEND_IMAGE:-e-math-backend:local}
     ports:
       - "127.0.0.1:3001:3001" # host Nginx (api.faridpens.my.id) proxies here
     environment:
@@ -44,7 +46,9 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    image: e-math-frontend:local
+    # Override via env untuk deploy dari registry, mis.:
+    #   FRONTEND_IMAGE=ghcr.io/muhammad2341/e-math-learning-frontend:latest
+    image: ${FRONTEND_IMAGE:-e-math-frontend:local}
     ports:
       - "127.0.0.1:3000:3000" # host Nginx (faridpens.my.id) proxies here
     environment:
