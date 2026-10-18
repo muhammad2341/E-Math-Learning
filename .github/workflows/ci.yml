@@ -1,0 +1,118 @@
+# CI: validate checks + build/push Docker images
+#
+# Triggers:
+#   - pull_request → branch main  (validate + build ONLY, never push images)
+#   - push         → branch main  (validate + build + push to GHCR)
+#
+# Required repository permissions (Settings → Actions → General):
+#   - Workflow permissions: "Read repository contents and write packages"
+# Required secrets:
+#   - GITHUB_TOKEN : provided automatically; used for GHCR push on main.
+#   - No other secrets are required. Do NOT hardcode credentials here.
+#
+# Image naming (GHCR, lowercased repository):
+#   ghcr.io/<owner>/<repo>-frontend:<sha>   ghcr.io/<owner>/<repo>-frontend:latest
+#   ghcr.io/<owner>/<repo>-backend:<sha>    ghcr.io/<owner>/<repo>-backend:latest
+
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# Least privilege at workflow level; job grants packages:write for main pushes.
+permissions:
+  contents: read
+
+env:
+  BUN_VERSION: "1.4.3"
+
+jobs:
+  build:
+    name: Validate & build images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # needed only to push to GHCR on main; ignored for fork PRs
+    steps:
+      # ──1. Checkout + tooling ──────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      # ── 2. Existing project checks (no lint/test scripts exist) ───
+      - name: Install backend dependencies (frozen lockfile)
+        working-directory: backend
+        run: bun install --frozen-lockfile
+
+      - name: Backend typecheck (tsc --noEmit)
+        working-directory: backend
+        run: bun run typecheck
+
+      - name: Install frontend dependencies (frozen lockfile)
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+        # `postinstall: nuxt prepare` runs automatically and validates the
+        # Nuxt app can be prepared/typed in its current state.
+
+      # ── 3. Validate compose configuration ─────────────────────────
+      - name: Validate Docker Compose (local + production override)
+        env:
+          JWT_SECRET: ci-validation-dummy # dummy only to satisfy prod ${:?}
+        run: |
+          docker compose -f docker-compose.yml config --quiet
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml config --quiet
+
+      # ── 4. Docker builds ──────────────────────────────────────────
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Compute image names
+        id: images
+        run: |
+          repo="$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')"
+          echo "frontend=ghcr.io/${repo}-frontend" >> "$GITHUB_OUTPUT"
+          echo "backend=ghcr.io/${repo}-backend" >> "$GITHUB_OUTPUT"
+
+      # Push only for pushes to main (trusted). PR builds never push images.
+      - name: Login to GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: ${{ github.event_name == 'push' }}
+          tags: |
+            ${{ steps.images.outputs.backend }}:${{ github.sha }}
+            ${{ steps.images.outputs.backend }}:latest
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+      - name: Build & push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: ${{ github.event_name == 'push' }}
+          tags: |
+            ${{ steps.images.outputs.frontend }}:${{ github.sha }}
+            ${{ steps.images.outputs.frontend }}:latest
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend

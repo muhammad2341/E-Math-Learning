@@ -1,0 +1,30 @@
+# ── Production override for the VPS (faridpens.my.id) ──────────────────
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Differences vs. the base (local) file:
+#   - Reads the root .env file (copy from .env.example) for real values.
+#   - JWT_SECRET is REQUIRED (compose fails fast if missing).
+#   - Defaults target the real domains (api.faridpens.my.id / faridpens.my.id).
+#   - MongoDB still runs on the VPS HOST — no MongoDB container is started
+#     (the optional `mongo` service stays behind the `mongo` profile and is
+#     never activated here).
+#   - Ports remain bound to 127.0.0.1; host Nginx is the only public entry.
+
+services:
+  backend:
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      PORT: "3001"
+      MONGODB_URI: ${MONGODB_URI:-mongodb://host.docker.internal:27017/e-learning-math}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in the root .env file}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://faridpens.my.id}
+    restart: unless-stopped
+
+  frontend:
+    environment:
+      NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:-https://api.faridpens.my.id/api}
+    restart: unless-stopped

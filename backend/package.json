@@ -1,0 +1,24 @@
+{
+  "name": "e-learning-math-backend",
+  "version": "1.0.0",
+  "description": "E-Learning Math Backend API with Elysia + Bun",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "start": "bun run src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "seed": "bun run src/utils/seed.ts"
+  },
+  "dependencies": {
+    "elysia": "^1.2.0",
+    "@elysiajs/cors": "^1.2.0",
+    "@elysiajs/jwt": "^1.2.0",
+    "@elysiajs/bearer": "^1.2.0",
+    "mongoose": "^8.9.0",
+    "bcryptjs": "^2.4.3"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "bun-types": "^1.4.3",
+    "typescript": "^5.7.0"
+  }
+}

@@ -1,0 +1,72 @@
+# ── Local integration / CI validation compose ──────────────────────────
+# Production architecture (see docs/ci-docker.md):
+#   - Frontend + backend run as these containers.
+#   - MongoDB runs ON THE VPS HOST (no container) — the optional `mongo`
+#     service below is OFF by default and only exists for local testing
+#     behind the `mongo` profile.
+#   - Host Nginx (not in this file) proxies faridpens.my.id / api.faridpens.my.id
+#     to the loopback ports published here (127.0.0.1 only).
+#
+# Local usage:
+#   docker compose up -d --build                       # expects MongoDB on host
+#   docker compose --profile mongo up -d --build       # temporary MongoDB container
+#     (+ set MONGODB_URI=mongodb://mongo:27017/e-learning-math)
+# Production usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+
+name: e-math-learning
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: e-math-backend:local
+    ports:
+      - "127.0.0.1:3001:3001" # host Nginx (api.faridpens.my.id) proxies here
+    environment:
+      PORT: "3001"
+      # Default: MongoDB installed on the HOST machine.
+      # Inside a container `localhost` is the container itself — use
+      # host.docker.internal instead (extra_hosts maps it to the host).
+      MONGODB_URI: ${MONGODB_URI:-mongodb://host.docker.internal:27017/e-learning-math}
+      JWT_SECRET: ${JWT_SECRET:-}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      # Origin of the frontend as seen by the browser
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - backend-uploads:/app/uploads # uploaded material files survive restarts
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: e-math-frontend:local
+    ports:
+      - "127.0.0.1:3000:3000" # host Nginx (faridpens.my.id) proxies here
+    environment:
+      # Consumed by the browser at run time (Nitro runtimeConfig override).
+      NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:-http://localhost:3001/api}
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── OPTIONAL local-only MongoDB (profiles: ["mongo"]) ────────────────
+  # Never started by default. Not part of the production architecture.
+  # No ports are published — only reachable from the compose network.
+  mongo:
+    image: mongo:7
+    profiles: ["mongo"]
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: e-learning-math
+    restart: unless-stopped
+
+volumes:
+  backend-uploads:
+  mongo-data:

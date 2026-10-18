@@ -1,0 +1,12 @@
+# Ignore build contexts for ./backend
+node_modules
+dist
+uploads
+.env
+.env.*
+!.env.example
+*.log
+.git
+.gitignore
+Dockerfile
+.dockerignore
