@@ -105,7 +105,7 @@
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       @click.self="showModal = false"
     >
-      <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
         <h3 class="text-lg font-semibold mb-4">Tambah Video</h3>
         <form @submit.prevent="handleSubmit" class="space-y-3">
           <div
