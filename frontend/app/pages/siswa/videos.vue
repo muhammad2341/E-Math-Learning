@@ -21,8 +21,8 @@
         <!-- Video embed -->
         <div class="aspect-video bg-gray-900">
           <iframe
-            v-if="isEmbeddable(v.videoUrl)"
-            :src="v.videoUrl"
+            v-if="embedSrc(v.videoUrl)"
+            :src="embedSrc(v.videoUrl)"
             class="w-full h-full"
             frameborder="0"
             allowfullscreen
@@ -63,14 +63,11 @@ import type { Chapter, Video } from '~/types';
 definePageMeta({ layout: 'dashboard' });
 
 const api = useApi();
+const { embedSrc } = useVideoEmbed();
 const chapters = ref<Chapter[]>([]);
 const videos = ref<Video[]>([]);
 const chapterFilter = ref('');
 const loading = ref(false);
-
-function isEmbeddable(url: string): boolean {
-  return url.includes('youtube.com/embed') || url.includes('player.vimeo.com') || url.includes('/embed/');
-}
 
 function getChapterOrder(v: Video): number | string {
   if (typeof v.chapterId === 'object') return v.chapterId.order;

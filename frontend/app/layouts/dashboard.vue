@@ -129,7 +129,7 @@ const navItems = computed(() => {
       { to: '/admin/materials', label: 'Materi Pelajaran' },
       { to: '/admin/practice', label: 'Latihan Soal' },
       { to: '/admin/evaluations', label: 'Evaluasi' },
-      { to: '/admin/videos', label: 'Video Pembelajaran' },
+      { to: '/admin/videos', label: 'Bisindo' },
       { to: '/admin/progress', label: 'Laporan Perkembangan' },
     ];
   }
@@ -138,7 +138,7 @@ const navItems = computed(() => {
     { to: '/siswa/materials', label: 'Materi Pelajaran' },
     { to: '/siswa/practice', label: 'Latihan Soal' },
     { to: '/siswa/evaluations', label: 'Evaluasi' },
-    { to: '/siswa/videos', label: 'Video Pembelajaran' },
+    { to: '/siswa/videos', label: 'Bisindo' },
     { to: '/siswa/progress', label: 'Progress Belajar' },
   ];
 });

@@ -144,16 +144,28 @@
           </div>
           <div>
             <label class="text-xs font-semibold text-gray-600"
-              >URL Video (YouTube embed / direct URL)</label
+              >URL Video (YouTube / Vimeo — watch atau embed)</label
             >
             <input
               v-model="form.videoUrl"
               type="text"
               class="input-field mt-1"
-              placeholder="https://www.youtube.com/embed/..."
+              placeholder="https://www.youtube.com/watch?v=..."
               required
             />
           </div>
+          <div v-if="embedSrc(form.videoUrl)" class="rounded-lg overflow-hidden border border-gray-200">
+            <iframe
+              :src="embedSrc(form.videoUrl)"
+              class="w-full aspect-video"
+              frameborder="0"
+              allowfullscreen
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            />
+          </div>
+          <p v-else-if="form.videoUrl" class="text-[11px] text-amber-600">
+            URL belum bisa di-embed — siswa tetap bisa membuka link di tab baru.
+          </p>
           <div>
             <label class="text-xs font-semibold text-gray-600">Urutan</label>
             <input
@@ -191,6 +203,7 @@ import type { Chapter, Video } from "~/types";
 definePageMeta({ layout: "dashboard" });
 
 const api = useApi();
+const { embedSrc } = useVideoEmbed();
 const chapters = ref<Chapter[]>([]);
 const videos = ref<Video[]>([]);
 const submitting = ref(false);

@@ -148,7 +148,10 @@
           </div>
           <div class="flex justify-end gap-3 pt-2">
             <button type="button" @click="showAddMat = false" class="btn-secondary text-sm">Batal</button>
-            <button type="submit" class="btn-primary text-sm" :disabled="submitting">{{ submitting ? 'Mengunggah...' : 'Unggah & Simpan' }}</button>
+            <button type="submit" class="btn-primary text-sm" :disabled="submitting">{{ submitting ? `Mengunggah... ${uploadProgress}%` : 'Unggah & Simpan' }}</button>
+          </div>
+          <div v-if="submitting" class="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+            <div class="bg-blue-600 h-2 rounded-full transition-all duration-200" :style="{ width: uploadProgress + '%' }" />
           </div>
         </form>
       </div>
@@ -168,6 +171,7 @@ const loadingChapters = ref(true);
 const selectedChapter = ref<Chapter | null>(null);
 const selectedId = ref('');
 const submitting = ref(false);
+const uploadProgress = ref(0);
 const modalError = ref('');
 
 const showAddMat = ref(false);
@@ -241,10 +245,20 @@ async function handleAddMaterial() {
   }
   modalError.value = '';
   submitting.value = true;
+  uploadProgress.value = 0;
 
   const fd = new FormData();
   fd.append('file', selectedFile.value);
-  const upRes = await api.upload<{ fileUrl: string; fileName: string; fileSize: string; type: string }>('/admin/upload', fd);
+  let upRes;
+  try {
+    upRes = await api.upload<{ fileUrl: string; fileName: string; fileSize: string; type: string }>('/admin/upload', fd, (p) => {
+      uploadProgress.value = p;
+    });
+  } catch {
+    modalError.value = 'Upload gagal — periksa koneksi';
+    submitting.value = false;
+    return;
+  }
   if (!upRes.success || !upRes.data) {
     modalError.value = upRes.message || 'Gagal mengunggah file';
     submitting.value = false;

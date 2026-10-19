@@ -199,14 +199,13 @@ export const appRoutes = new Elysia({ prefix: "/api" })
         set.status = 400;
         return { success: false, message: "Format file harus PDF, PPT, atau PPTX" };
       }
-      const { mkdir, writeFile } = await import("fs/promises");
+      const { mkdir } = await import("fs/promises");
       const { join } = await import("path");
       const uploadsDir = join(process.cwd(), "uploads");
       await mkdir(uploadsDir, { recursive: true });
       const safeBase = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
       const filename = `${Date.now()}_${safeBase}`;
-      const buffer = Buffer.from(await file.arrayBuffer());
-      await writeFile(join(uploadsDir, filename), buffer);
+      await Bun.write(join(uploadsDir, filename), file);
       const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
       return {
         success: true,

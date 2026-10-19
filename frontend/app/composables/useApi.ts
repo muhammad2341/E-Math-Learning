@@ -39,17 +39,28 @@ export function useApi() {
     });
   }
 
-  async function upload<T>(endpoint: string, formData: FormData): Promise<ApiResponse<T>> {
-    const headers: Record<string, string> = {};
-    if (authStore.token) {
-      headers['Authorization'] = `Bearer ${authStore.token}`;
-    }
-    const response = await fetch(`${baseURL}${endpoint}`, {
-      method: 'POST',
-      headers,
-      body: formData,
+  async function upload<T>(endpoint: string, formData: FormData, onProgress?: (percent: number) => void): Promise<ApiResponse<T>> {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${baseURL}${endpoint}`);
+      if (authStore.token) {
+        xhr.setRequestHeader('Authorization', `Bearer ${authStore.token}`);
+      }
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable && onProgress) {
+          onProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      };
+      xhr.onload = () => {
+        try {
+          resolve(JSON.parse(xhr.responseText) as ApiResponse<T>);
+        } catch {
+          reject(new Error('Respons server tidak valid'));
+        }
+      };
+      xhr.onerror = () => reject(new Error('Upload gagal — periksa koneksi'));
+      xhr.send(formData);
     });
-    return (await response.json()) as ApiResponse<T>;
   }
 
   function put<T>(endpoint: string, body: unknown) {
