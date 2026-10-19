@@ -1,8 +1,8 @@
 <template>
   <div>
     <div class="mb-6">
-      <h2 class="text-2xl font-bold text-gray-900">Video Pembelajaran</h2>
-      <p class="text-sm text-gray-500">Tonton video pembelajaran per bab</p>
+      <h2 class="text-2xl font-bold text-gray-900">Bisindo</h2>
+      <p class="text-sm text-gray-500">Tonton Bisindo per bab</p>
     </div>
 
     <!-- Filter -->
