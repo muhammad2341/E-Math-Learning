@@ -105,9 +105,10 @@
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       @click.self="showModal = false"
     >
-      <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
-        <h3 class="text-lg font-semibold mb-4">Tambah Video</h3>
-        <form @submit.prevent="handleSubmit" class="space-y-3">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 max-h-[90vh] flex flex-col">
+        <h3 class="text-lg font-semibold mb-4 shrink-0">Tambah Video</h3>
+        <form @submit.prevent="handleSubmit" class="flex flex-col min-h-0 flex-1">
+          <div class="space-y-3 overflow-y-auto pr-1 flex-1 min-h-0">
           <div
             v-if="modalError"
             class="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm"
@@ -175,7 +176,8 @@
               class="input-field mt-1"
             />
           </div>
-          <div class="flex justify-end gap-3 pt-2">
+          </div>
+          <div class="flex justify-end gap-3 pt-4 mt-4 border-t border-gray-100 shrink-0">
             <button
               type="button"
               @click="showModal = false"
