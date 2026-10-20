@@ -2,9 +2,10 @@ export function useVideoEmbed() {
   function toEmbedUrl(url: string): string | null {
     if (!url) return null;
 
-    // YouTube: watch?v= / youtu.be / shorts / embed
+    // YouTube: watch?v= / embed / shorts / youtu.be
+    // Handles URLs like watch?v=ID, watch?app=desktop&v=ID, watch?feature=share&v=ID&t=10s
     const ytMatch = url.match(
-      /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/i
+      /(?:youtube\.com\/(?:watch\?[^#]*?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/i
     );
     if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
 

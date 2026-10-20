@@ -53,12 +53,14 @@ export function useApi() {
       };
       xhr.onload = () => {
         try {
-          resolve(JSON.parse(xhr.responseText) as ApiResponse<T>);
+          const data = JSON.parse(xhr.responseText) as ApiResponse<T>;
+          resolve(data);
         } catch {
-          reject(new Error('Respons server tidak valid'));
+          reject(new Error(`Respons server tidak valid (status ${xhr.status})`));
         }
       };
       xhr.onerror = () => reject(new Error('Upload gagal — periksa koneksi'));
+      xhr.ontimeout = () => reject(new Error('Upload gagal — waktu habis'));
       xhr.send(formData);
     });
   }

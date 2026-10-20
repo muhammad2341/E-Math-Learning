@@ -29,6 +29,11 @@
               <th
                 class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase"
               >
+                Preview
+              </th>
+              <th
+                class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase"
+              >
                 URL
               </th>
               <th
@@ -54,6 +59,20 @@
               <td class="px-4 py-3 text-gray-600 text-xs">
                 Bab {{ (v.chapterId as any)?.order }} -
                 {{ (v.chapterId as any)?.title }}
+              </td>
+              <td class="px-4 py-3">
+                <div v-if="embedSrc(v.videoUrl)" class="w-28 aspect-video rounded overflow-hidden border border-gray-200 bg-gray-900">
+                  <iframe
+                    :src="embedSrc(v.videoUrl)"
+                    class="w-full h-full pointer-events-none"
+                    frameborder="0"
+                    allowfullscreen
+                    loading="lazy"
+                  />
+                </div>
+                <div v-else class="w-28 h-16 rounded bg-gray-100 flex items-center justify-center text-[10px] text-gray-400 text-center px-1">
+                  Tidak bisa di-embed
+                </div>
               </td>
               <td
                 class="px-4 py-3 text-xs text-gray-500 max-w-[200px] truncate"
@@ -90,7 +109,7 @@
               </td>
             </tr>
             <tr v-if="videos.length === 0">
-              <td colspan="5" class="px-4 py-12 text-center text-gray-400">
+              <td colspan="6" class="px-4 py-12 text-center text-gray-400">
                 Belum ada video
               </td>
             </tr>
